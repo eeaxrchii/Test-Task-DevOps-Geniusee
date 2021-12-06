@@ -44,3 +44,11 @@ resourse "aws_security_group" "web_server"{
     }
 }
 
+resource "aws_launch_configuration" "web_server"{
+    name = "WebServer-Test-Task"
+    image_id = data.aws.ami.lates_amazon_linux.image_id
+    instance_type = "t2.micro"
+    security_groups = [aws_security_group.web_server]
+
+    user_data = file("user_data.sh")
+}
