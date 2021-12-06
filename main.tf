@@ -7,7 +7,7 @@ provider "aws" {
   region = "eu-central-1"
 }
 
-data "aws_avialability_zones" "available" {}
+data "aws_availability_zones" "available" {}
 data "aws_ami" "latest_amazon_linux" {
   owners      = ["amazon"]
   most_recent = true
@@ -18,7 +18,7 @@ data "aws_ami" "latest_amazon_linux" {
 }
 
 #Create new secrity group
-resourse "aws_security_group" "web_server" {
+resource "aws_security_group" "web_server" {
   name = "Security Group"
 
   dynamic "ingress" {
@@ -32,7 +32,7 @@ resourse "aws_security_group" "web_server" {
   }
   egress {
     from_port   = 0
-    to_prot     = 0
+    to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -45,9 +45,9 @@ resourse "aws_security_group" "web_server" {
 #Create webserver
 resource "aws_launch_configuration" "web_server" {
   name_prefix     = "WebServer-Test-Task-WB-"
-  image_id        = data.aws.ami.lates_amazon_linux.image_id
+  image_id        = data.aws_ami.latest_amazon_linux.image_id
   instance_type   = "t2.micro"
-  security_groups = [aws_security_group.web_server]
+  security_groups = [aws_security_group.web_server.id]
   user_data       = file("user_data.sh")
 
   #Create lifecycle forn there isn't downtime server
@@ -58,21 +58,21 @@ resource "aws_launch_configuration" "web_server" {
 
 #Create autoscaling group
 resource "aws_autoscaling_group" "web_server" {
-  name_name_prefix          = "WebServer-Test-Task-ASG-"
+  name_prefix          = "WebServer-Test-Task-ASG-"
   launch_configuration      = aws_launch_configuration.web_server.name                
   max_size                  = 2
   min_size                  = 2
   min_elb_capacity          = 2
   health_check_type         = "ELB"  
   vpc_zone_identifier       = [aws_default_subnet.default_az1.id, aws_default_subnet.default_az2.id]
-  load_balancers            = [aws_elb.web_server]
+  load_balancers            = [aws_elb.web_server.name]
 
     dynamic "tag"{
         for_each = {
             Name = "WebServer"
             Owner = "You"
         }
-        conetnt{
+        content{
             key                 = tag.key
             value               = tag.value
             propagate_at_launch = true
@@ -85,12 +85,12 @@ resource "aws_autoscaling_group" "web_server" {
 }
 
 resource "aws_elb" "web_server"{
-    name_prefix         =   "WebServer-Test-Task-ELB"
-    availability_zones  = [data.aws.availability_zones.available.names[0], data.aws.availability_zones.available.names[1]]
-    security_groups     = [aws_security_group.web.id]
+    name                =   "WebServer-Test-Task-ELB"
+    availability_zones  = [data.aws_availability_zones.available.names[0], data.aws_availability_zones.available.names[1]]
+    security_groups     = [aws_security_group.web_server.id]
     listener {
         lb_port           = 80
-        lblb_protocol     = "http"
+        lb_protocol     = "http"
         instance_port     = 80
         instance_protocol = "http"
     }
@@ -112,4 +112,8 @@ resource "aws_default_subnet" "default_az1" {
 
 resource "aws_default_subnet" "default_az2" {
   availability_zone = data.aws_availability_zones.available.names[1]
+}
+
+output "web_loadbalancer_url"{
+    value = aws_elb.web_server.dns_name
 }
