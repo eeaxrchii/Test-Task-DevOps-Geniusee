@@ -64,8 +64,8 @@ resource "aws_autoscaling_group" "web_server" {
   min_size                  = 2
   min_elb_capacity          = 2
   health_check_type         = "ELB"  
-  vpc_zone_identifier       = [] ----
-  load_balancers            = [] ----
+  vpc_zone_identifier       = 
+  load_balancers            = [aws_elb.web_server]
 
     dynamic "tag"{
         for_each = {
@@ -82,4 +82,30 @@ resource "aws_autoscaling_group" "web_server" {
     lifecycle {
         create_before_destroy = true
     }  
+}
+
+resource "aws_elb" "web_server"{
+    name_prefix         =   "WebServer-Test-Task-ELB"
+    availability_zones  = [data.aws.availability_zones.available.names[0], data.aws.availability_zones.available.names[1]]
+    security_groups     = [aws_security_group.web.id]
+    listener {
+        lb_port           = 80
+        lblb_protocol     = "http"
+        instance_port     = 80
+        instance_protocol = "http"
+    }
+    health_check {
+      healthy_threshold     = 2
+      unhealthy_threshold   = 2
+      timeout               = 3
+      target                = "HTTP:80/"
+      interval              = 10
+    }
+    tags = {
+        Name = "WebServer-Test-Task-ELB"
+    }
+}
+
+resource "aws_default" "name" {
+  
 }
