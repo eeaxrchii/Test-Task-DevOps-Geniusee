@@ -64,7 +64,7 @@ resource "aws_autoscaling_group" "web_server" {
   min_size                  = 2
   min_elb_capacity          = 2
   health_check_type         = "ELB"  
-  vpc_zone_identifier       = 
+  vpc_zone_identifier       = [aws_default_subnet.default_az1.id, aws_default_subnet.default_az2.id]
   load_balancers            = [aws_elb.web_server]
 
     dynamic "tag"{
@@ -106,6 +106,10 @@ resource "aws_elb" "web_server"{
     }
 }
 
-resource "aws_default" "name" {
-  
+resource "aws_default_subnet" "default_az1" {
+  availability_zone = data.aws_availability_zones.available.names[0]
+}
+
+resource "aws_default_subnet" "default_az2" {
+  availability_zone = data.aws_availability_zones.available.names[1]
 }
