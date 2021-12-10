@@ -312,7 +312,7 @@ resource "kubernetes_daemonset" "fluentd" {
 
           env {
             name  = "FLUENT_ELASTICSEARCH_HOST"
-            value = "elasticsearch-logging"
+            value = "${aws_elasticsearch_domain.elastic_logs_domain.endpoint}"
           }
 
           env {
