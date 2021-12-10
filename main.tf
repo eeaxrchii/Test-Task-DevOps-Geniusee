@@ -302,7 +302,7 @@ resource "kubernetes_daemonset" "fluentd" {
           name = "varlog"
 
           host_path {
-            path = "/var/log"
+            path = "/var/log/apache2/"
           }
         }
 
